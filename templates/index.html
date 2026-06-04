@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>光影手记 - 首页</title>
+    <style>
+        /* 复古电影风格 */
+        :root {
+            --bg-color: #f4eee8;
+            --card-bg: rgba(255, 255, 255, 0.55);
+            --text-main: #4a3b32;
+            --text-muted: #8b796d;
+            --accent-gold: #cba052;
+            --accent-red: #722f37;
+            --accent-green: #2b3a32;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+            background: linear-gradient(135deg, #e8dfd8 0%, #d4c5b9 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text-main);
+            position: relative;
+        }
+
+        body::before {
+            content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.06'/%3E%3C/svg%3E");
+            pointer-events: none; z-index: 1;
+        }
+
+        .light-glow {
+            position: absolute; width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(203, 160, 82, 0.15) 0%, rgba(203, 160, 82, 0) 70%);
+            bottom: -100px; right: -100px; border-radius: 50%; pointer-events: none; z-index: 0;
+        }
+
+        .container { position: relative; z-index: 2; width: 100%; max-width: 1200px; margin: 0 auto; padding: 20px; box-sizing: border-box; }
+
+        /* 导航栏 */
+        .navbar {
+            background: var(--card-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 12px;
+            padding: 15px 25px; margin-bottom: 30px; box-shadow: 0 8px 30px rgba(74, 59, 50, 0.1);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .navbar .logo { font-family: "Noto Serif SC", serif; font-size: 1.5rem; font-weight: 500; color: var(--text-main); letter-spacing: 3px; }
+        .navbar .nav-links { display: flex; gap: 20px; }
+        .navbar .nav-links a { color: var(--text-main); text-decoration: none; font-size: 0.9rem; letter-spacing: 1px; transition: all 0.3s; border-bottom: 1px solid transparent; }
+        .navbar .nav-links a:hover { color: var(--accent-gold); border-bottom-color: var(--accent-gold); }
+
+        /* 欢迎信息 */
+        .welcome-message, .user-welcome {
+            background: var(--card-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 12px;
+            padding: 30px 20px; margin-bottom: 30px; box-shadow: 0 8px 25px rgba(74, 59, 50, 0.1);
+            text-align: center;
+        }
+
+        .welcome-message h2 { font-family: "Noto Serif SC", serif; font-size: 1.8rem; color: var(--text-main); margin: 0 0 10px 0; letter-spacing: 2px;}
+        .welcome-message p { font-size: 1rem; color: var(--text-muted); margin: 0 0 20px 0; letter-spacing: 1px;}
+        .welcome-message .login-links a {
+            display: inline-block; padding: 10px 25px; background: var(--text-main); color: #f4eee8; 
+            text-decoration: none; border-radius: 6px; margin: 0 10px; transition: all 0.3s; letter-spacing: 2px;
+        }
+        .welcome-message .login-links a.outline { background: transparent; border: 1px solid var(--text-main); color: var(--text-main); }
+        .welcome-message .login-links a:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(74, 59, 50, 0.2); }
+
+        .user-welcome { display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; text-align: left;}
+        .user-welcome .user-info { display: flex; align-items: center; gap: 15px; }
+        .user-welcome .user-info .avatar {
+            width: 50px; height: 50px; border-radius: 50%; background: var(--accent-gold);
+            display: flex; justify-content: center; align-items: center; color: #fff;
+            font-family: "Noto Serif SC", serif; font-size: 1.5rem; box-shadow: 0 4px 10px rgba(203, 160, 82, 0.3);
+        }
+        .user-welcome .user-info .username { font-family: "Noto Serif SC", serif; font-size: 1.2rem; color: var(--text-main); }
+        .user-welcome .quick-links a {
+            color: var(--accent-gold); text-decoration: none; margin-left: 20px; font-size: 0.95rem;
+            border-bottom: 1px solid transparent; transition: all 0.3s;
+        }
+        .user-welcome .quick-links a:hover { border-bottom-color: var(--accent-gold); }
+
+        /* 模块标题 */
+        .section-title {
+            font-family: "Noto Serif SC", serif; font-size: 1.4rem; color: var(--text-main);
+            margin: 10px 0 25px 0; padding-left: 15px; border-left: 4px solid var(--accent-gold);
+            letter-spacing: 2px;
+        }
+
+        /* 电影列表 - 票根设计 */
+        .movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 35px; margin-bottom: 50px;}
+        
+        .movie-card {
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 10px 30px rgba(74, 59, 50, 0.15);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(74, 59, 50, 0.2);
+            padding: 8px; /* 为胶片边框留出空间 */
+            background-color: #2b2b2b; /* 胶片黑底色 */
+            position: relative;
+        }
+
+        .movie-card:hover { 
+            transform: translateY(-8px); 
+            box-shadow: 0 15px 40px rgba(74, 59, 50, 0.25); 
+        }
+
+        /* 胶片齿孔边框 (左右两侧) */
+        .movie-card::before, .movie-card::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 14px;
+            background-image: radial-gradient(circle at center, #f4eee8 40%, transparent 45%);
+            background-size: 14px 22px; /* 调整齿孔的密度 */
+            z-index: 10;
+        }
+
+        .movie-card::before {
+            left: 2px;
+        }
+
+        .movie-card::after {
+            right: 2px;
+        }
+
+        /* 动态生成的 SVG 海报 */
+        .movie-poster {
+            height: 300px; 
+            width: 100%;
+            position: relative;
+            background-color: var(--text-main);
+            overflow: hidden;
+            border-radius: 4px;
+            z-index: 2; /* 确保在黑底之上 */
+        }
+
+        /* 纯动态 SVG 的容器 */
+        .poster-svg-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 0;
+        }
+        
+        .poster-svg-container svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 为插画增加细微的胶片颗粒感 */
+        .movie-poster::before {
+            content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+            mix-blend-mode: multiply;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 底部半透明遮罩，使文字清晰 */
+        .poster-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.85) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px 15px;
+            z-index: 2;
+        }
+
+        .poster-label {
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 3px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .poster-title {
+            font-family: "Noto Serif SC", serif;
+            font-size: 1.15rem;
+            color: #fff;
+            letter-spacing: 2px;
+            text-shadow: 1px 2px 5px rgba(0,0,0,0.8);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* 票根打孔效果隐藏，改为胶片内部的信息卡 */
+        .ticket-divider {
+            display: none;
+        }
+
+        /* 卡片底部信息 */
+        .movie-info {
+            padding: 15px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+            z-index: 2;
+            position: relative;
+        }
+
+        /* 增加一层轻微的老照片发黄滤镜覆盖整个卡片内容区 */
+        .movie-card-inner-overlay {
+            position: absolute;
+            top: 8px; left: 8px; right: 8px; bottom: 8px;
+            background: rgba(203, 160, 82, 0.05); /* 淡淡的暖金色 */
+            pointer-events: none;
+            z-index: 15;
+            mix-blend-mode: multiply;
+        }
+
+        .movie-info .title { 
+            font-size: 1.05rem; 
+            font-weight: bold; 
+            color: var(--text-main); 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        }
+
+        .movie-info .genres { 
+            font-size: 0.85rem; 
+            color: var(--text-muted); 
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .movie-info .genres::before {
+            content: '';
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23cba052' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='2' width='20' height='20' rx='2.18' ry='2.18'%3E%3C/rect%3E%3Cline x1='7' y1='2' x2='7' y2='22'%3E%3C/line%3E%3Cline x1='17' y1='2' x2='17' y2='22'%3E%3C/line%3E%3Cline x1='2' y1='12' x2='22' y2='12'%3E%3C/line%3E%3Cline x1='2' y1='7' x2='7' y2='7'%3E%3C/line%3E%3Cline x1='2' y1='17' x2='7' y2='17'%3E%3C/line%3E%3Cline x1='17' y1='17' x2='22' y2='17'%3E%3C/line%3E%3Cline x1='17' y1='7' x2='22' y2='7'%3E%3C/line%3E%3C/svg%3E");
+            background-size: cover;
+        }
+
+        .action-btn {
+            margin-top: 10px;
+            padding: 8px 0;
+            text-align: center;
+            background: rgba(203, 160, 82, 0.1);
+            color: var(--accent-gold);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+        
+        .action-btn:hover {
+            background: var(--accent-gold);
+            color: #fff;
+        }
+
+        /* 全屏隐形链接样式 */
+.card-full-link {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+}
+
+        /* 加载动画 */
+        .page-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #e8dfd8 0%, #d4c5b9 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .page-loading.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(203, 160, 82, 0.2);
+            border-top-color: var(--accent-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* 电影卡片入场动画 */
+        .movie-card {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: cardFadeIn 0.6s ease forwards;
+        }
+
+        @keyframes cardFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 导航栏滑入动画 */
+        .navbar {
+            animation: slideDown 0.5s ease forwards;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 欢迎区淡入动画 */
+        .welcome-message, .user-welcome {
+            animation: fadeIn 0.8s ease 0.2s forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        /* 标题滑入动画 */
+        .section-title {
+            animation: slideIn 0.6s ease 0.3s forwards;
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* 收藏按钮样式 */
+        .favorite-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            cursor: pointer;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .favorite-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .favorite-btn svg {
+            width: 20px;
+            height: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .favorite-btn.active {
+            background: var(--accent-red);
+        }
+
+        .favorite-btn.active svg {
+            fill: #fff;
+            stroke: #fff;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="light-glow"></div>
+    
+    <!-- 加载动画遮罩 -->
+    <div class="page-loading" id="pageLoading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">正在准备放映...</div>
+    </div>
+    
+    <div class="container">
+        <!-- 导航栏 -->
+        <div class="navbar">
+            <div class="logo">光影手记</div>
+            <div class="nav-links">
+                <a href="/">首页</a>
+                <a href="/search">电影搜索</a>
+                <a href="/recommend">为你推荐</a>
+                {% if user %}
+                    <a href="/profile">个人画像</a>
+                    <a href="/logout">退出登录</a>
+                {% else %}
+                    <a href="/login">登录</a>
+                    <a href="/register">注册</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 欢迎信息（未登录） -->
+        {% if not user %}
+            <div class="welcome-message">
+                <h2>推开放映厅的门</h2>
+                <p>在这个角落，发现好电影，写下只属于你的观影手记。</p>
+                <div class="login-links">
+                    <a href="/login">入场观影</a>
+                    <a href="/register" class="outline">领取观影证</a>
+                </div>
+            </div>
+        {% else %}
+            <!-- 欢迎信息（已登录） -->
+            <div class="user-welcome">
+                <div class="user-info">
+                    <div class="avatar">{{ user.username[0] | upper }}</div>
+                    <div class="username">放映员 {{ user.username }}，欢迎回到你的影厅。</div>
+                </div>
+                <div class="quick-links">
+                    <a href="/recommend">专属排片</a>
+                    <a href="/profile">我的光影档案</a>
+                </div>
+            </div>
+        {% endif %}
+
+        <h3 class="section-title">近期放映</h3>
+
+        <!-- 电影列表 -->
+        <div class="movie-grid">
+            {% for movie in movies %}
+<div class="movie-card" data-movie-id="{{ movie.movieId }}" data-movie-title="{{ movie.title }}">
+    <!-- 收藏按钮 -->
+    <button class="favorite-btn" onclick="toggleFavorite(event, {{ movie.movieId }}, '{{ movie.title }}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+    </button>
+    <!-- 新增：隐形全屏链接层，铺满整个卡片，点哪里都能跳转 -->
+    <a href="/movie/{{ movie.movieId }}" class="card-full-link"></a>
+
+    <!-- 发黄滤镜层 -->
+    <div class="movie-card-inner-overlay"></div>
+
+    <div class="movie-poster" data-title="{{ movie.title }}" data-genres="{{ movie.genres }}">
+        <!-- 动态生成的 SVG 容器 -->
+        <div class="poster-svg-container"></div>
+        <div class="poster-overlay">
+            <div class="poster-label">CINEMATIC EXPERIENCE</div>
+            <div class="poster-title">{{ movie.title }}</div>
+        </div>
+    </div>
+
+    <div class="movie-info">
+        <div class="title" title="{{ movie.title }}">{{ movie.title }}</div>
+        <div class="genres">{{ movie.genres if movie.genres else '未知类型' }}</div>
+        <!-- 修改：这里的 href 从 "#" 改成真实的跳转地址 -->
+        <a href="/movie/{{ movie.movieId }}" class="action-btn">查看放映详情</a>
+    </div>
+</div>
+{% endfor %}
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 隐藏加载动画
+            const pageLoading = document.getElementById('pageLoading');
+            setTimeout(() => {
+                pageLoading.classList.add('hidden');
+            }, 500);
+
+            // 电影卡片逐个出现动画
+            const cards = document.querySelectorAll('.movie-card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${0.1 + index * 0.1}s`;
+            });
+
+            // 初始化收藏按钮状态
+            initFavoriteButtons();
+
+            // 定义色彩美学：基础底色 与 强调色（基于老式电影院配色）
+            const palettes = [
+                { bg: '#4a3b32', fg: '#cba052', accent: '#722f37' }, // 棕+金+酒红
+                { bg: '#2b3a32', fg: '#8b796d', accent: '#cba052' }, // 墨绿+灰褐+金
+                { bg: '#3a313d', fg: '#cba052', accent: '#5c6b65' }, // 暗紫+金+灰绿
+                { bg: '#722f37', fg: '#e8dfd8', accent: '#4a3b32' }, // 酒红+米白+棕
+                { bg: '#485b6b', fg: '#cba052', accent: '#25323d' }  // 灰蓝+金+深蓝
+            ];
+
+            // 伪随机数生成器（基于种子），确保同一部电影生成的画面是固定不变的
+            function PRNG(seed) {
+                this.seed = seed % 2147483647;
+                if (this.seed <= 0) this.seed += 2147483646;
+            }
+            PRNG.prototype.next = function() {
+                return this.seed = this.seed * 16807 % 2147483647;
+            };
+            PRNG.prototype.nextFloat = function() {
+                return (this.next() - 1) / 2147483646;
+            };
+
+            const posters = document.querySelectorAll('.movie-poster');
+
+            posters.forEach((poster) => {
+                const title = poster.getAttribute('data-title') || 'Unknown';
+                const genresStr = poster.getAttribute('data-genres') || '';
+
+                // 1. 根据片名计算基础种子
+                let seedVal = 0;
+                for(let i = 0; i < title.length; i++) {
+                    seedVal += title.charCodeAt(i) * (i + 1);
+                }
+                const rng = new PRNG(seedVal);
+
+                // 2. 根据种子选择色板
+                const palette = palettes[Math.floor(rng.nextFloat() * palettes.length)];
+
+                // 3. 根据类型(Genres)推断主要图形元素特征
+                // 默认特征
+                let shapeType = 'mixed'; // mixed, sharp(尖锐), round(圆润), grid(网格)
+                const lowerGenres = genresStr.toLowerCase();
+
+                if (lowerGenres.includes('动作') || lowerGenres.includes('科幻') || lowerGenres.includes('惊悚') || lowerGenres.includes('action') || lowerGenres.includes('sci-fi')) {
+                    shapeType = 'sharp'; // 动作科幻多用直线、三角形
+                } else if (lowerGenres.includes('爱情') || lowerGenres.includes('剧情') || lowerGenres.includes('动画') || lowerGenres.includes('romance') || lowerGenres.includes('drama')) {
+                    shapeType = 'round'; // 爱情剧情多用圆形、柔和曲线
+                } else if (lowerGenres.includes('纪录片') || lowerGenres.includes('历史') || lowerGenres.includes('documentary')) {
+                    shapeType = 'grid'; // 历史纪录多用方正网格、胶片感
+                }
+
+                // 4. 开始生成 SVG 代码
+                let svgContent = `<svg viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg">`;
+
+                // 绘制底色
+                svgContent += `<rect width="200" height="300" fill="${palette.bg}"/>`;
+
+                // 随机决定生成几个图形元素（2到4个）
+                const numShapes = Math.floor(rng.nextFloat() * 3) + 2;
+
+                for(let i = 0; i < numShapes; i++) {
+                    // 每个图形的颜色（在 fg 和 accent 之间选择）
+                    const color = rng.nextFloat() > 0.5 ? palette.fg : palette.accent;
+                    // 透明度变化
+                    const opacity = 0.5 + (rng.nextFloat() * 0.5); // 0.5 - 1.0
+
+                    // 基于类型生成图形
+                    let currentShapeType = shapeType;
+                    if (shapeType === 'mixed') {
+                        const types = ['sharp', 'round', 'grid'];
+                        currentShapeType = types[Math.floor(rng.nextFloat() * types.length)];
+                    }
+
+                    if (currentShapeType === 'sharp') {
+                        // 绘制多边形/三角形
+                        const points = [];
+                        for(let p=0; p<3; p++) {
+                            points.push(`${Math.floor(rng.nextFloat()*200)},${Math.floor(rng.nextFloat()*300)}`);
+                        }
+                        svgContent += `<polygon points="${points.join(' ')}" fill="${color}" opacity="${opacity}"/>`;
+                    }
+                    else if (currentShapeType === 'round') {
+                        // 绘制圆形
+                        const cx = Math.floor(rng.nextFloat() * 200);
+                        const cy = Math.floor(rng.nextFloat() * 300);
+                        const r = 30 + Math.floor(rng.nextFloat() * 70);
+                        svgContent += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}" opacity="${opacity}"/>`;
+                    }
+                    else if (currentShapeType === 'grid') {
+                        // 绘制矩形
+                        const x = Math.floor(rng.nextFloat() * 150);
+                        const y = Math.floor(rng.nextFloat() * 200);
+                        const w = 40 + Math.floor(rng.nextFloat() * 80);
+                        const h = 40 + Math.floor(rng.nextFloat() * 120);
+                        svgContent += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${color}" opacity="${opacity}"/>`;
+                    }
+                }
+
+                // 5. 额外随机添加一条装饰线或胶片孔装饰
+                if (rng.nextFloat() > 0.4) {
+                    if (rng.nextFloat() > 0.5) {
+                        // 随机画一条粗线
+                        const yPos = Math.floor(rng.nextFloat() * 250);
+                        svgContent += `<line x1="0" y1="${yPos}" x2="200" y2="${yPos}" stroke="${palette.fg}" stroke-width="4" opacity="0.8"/>`;
+                    } else {
+                        // 胶片齿孔效果（一排小方块）
+                        const xOffset = rng.nextFloat() > 0.5 ? 10 : 180;
+                        for(let holeY=10; holeY<300; holeY+=30) {
+                            svgContent += `<rect x="${xOffset}" y="${holeY}" width="10" height="15" fill="${palette.bg}" opacity="0.8" rx="2"/>`;
+                        }
+                    }
+                }
+
+                svgContent += `</svg>`;
+
+                // 将生成的 SVG 注入容器
+                poster.querySelector('.poster-svg-container').innerHTML = svgContent;
+            });
+        });
+
+        // 收藏功能
+        function getFavorites() {
+            const favorites = localStorage.getItem('movieFavorites');
+            return favorites ? JSON.parse(favorites) : [];
+        }
+
+        function saveFavorites(favorites) {
+            localStorage.setItem('movieFavorites', JSON.stringify(favorites));
+        }
+
+        function isFavorite(movieId) {
+            const favorites = getFavorites();
+            return favorites.some(f => f.id === movieId);
+        }
+
+        function toggleFavorite(event, movieId, movieTitle) {
+            event.stopPropagation();
+            event.preventDefault();
+
+            const btn = event.currentTarget;
+            const favorites = getFavorites();
+            const index = favorites.findIndex(f => f.id === movieId);
+
+            if (index > -1) {
+                favorites.splice(index, 1);
+                btn.classList.remove('active');
+            } else {
+                favorites.push({ id: movieId, title: movieTitle, time: Date.now() });
+                btn.classList.add('active');
+            }
+
+            saveFavorites(favorites);
+        }
+
+        function initFavoriteButtons() {
+            const buttons = document.querySelectorAll('.favorite-btn');
+            buttons.forEach(btn => {
+                const card = btn.closest('.movie-card');
+                const movieId = parseInt(card.dataset.movieId);
+                if (isFavorite(movieId)) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
