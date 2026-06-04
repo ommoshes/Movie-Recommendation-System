@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 光影手记</title>
+    <style>
+        /* 统一色彩体系：暖棕、米白、哑光金、酒红 */
+        :root {
+            --bg-color: #f4eee8; 
+            --card-bg: rgba(255, 255, 255, 0.55);
+            --text-main: #4a3b32; 
+            --text-muted: #8b796d;
+            --accent-gold: #cba052; 
+            --accent-red: #722f37; 
+            --accent-green: #2b3a32; 
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #e8dfd8 0%, #d4c5b9 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            color: var(--text-main);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 胶片颗粒感纹理背景 - 保持与注册页一致 */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.06'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 柔和弥散光 - 营造一盏旧台灯的光晕 */
+        .light-glow {
+            position: absolute;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(203, 160, 82, 0.12) 0%, rgba(203, 160, 82, 0) 70%);
+            top: -150px;
+            left: -100px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 480px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* 顶部引言 */
+        .quote {
+            text-align: center;
+            font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            margin-bottom: 35px;
+            letter-spacing: 1.5px;
+            font-style: italic;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+            padding: 0 10px;
+        }
+
+        /* 悬浮磨砂玻璃卡片 */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            padding: 45px 40px;
+            box-shadow: 0 12px 40px rgba(74, 59, 50, 0.12),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 放映机镜头的SVG极简装饰 */
+        .decor-lens {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            opacity: 0.1;
+            width: 50px;
+            height: auto;
+            pointer-events: none;
+        }
+        
+        .decor-lens circle, .decor-lens path {
+            fill: none;
+            stroke: var(--text-main);
+            stroke-width: 1.5;
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .card-header h1 {
+            font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+            font-size: 2.2rem;
+            font-weight: 500;
+            margin: 0;
+            letter-spacing: 6px;
+            color: var(--text-main);
+            padding-left: 6px; 
+        }
+
+        .card-header p {
+            margin: 12px 0 0;
+            font-size: 0.85rem;
+            color: var(--accent-gold);
+            letter-spacing: 3px;
+        }
+
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 28px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            letter-spacing: 1px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="password"] {
+            width: 100%;
+            padding: 14px 16px;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(139, 121, 109, 0.25);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            transition: all 0.3s ease;
+            outline: none;
+            font-family: inherit;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input::placeholder {
+            color: rgba(139, 121, 109, 0.55);
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        .form-group input:focus {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px rgba(203, 160, 82, 0.15);
+        }
+
+        /* 记住我 复选框精致样式 */
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .form-checkbox input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border: 1px solid rgba(139, 121, 109, 0.5);
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.4);
+            margin-right: 10px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .form-checkbox input[type="checkbox"]:checked {
+            background: var(--accent-gold);
+            border-color: var(--accent-gold);
+        }
+
+        .form-checkbox input[type="checkbox"]:checked::after {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 1px;
+            width: 4px;
+            height: 8px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .form-checkbox label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        /* 错误提示 */
+        .error-message {
+            color: var(--accent-red);
+            font-size: 0.75rem;
+            position: absolute;
+            bottom: -20px;
+            left: 0;
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+        }
+        
+        .error-message.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 登录按钮 */
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            background: var(--text-main);
+            color: #f4eee8;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.05rem;
+            letter-spacing: 4px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+            box-shadow: 0 4px 15px rgba(74, 59, 50, 0.2);
+        }
+
+        .btn-submit:hover {
+            background: #362a23;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(74, 59, 50, 0.3);
+        }
+
+        .btn-submit:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 10px rgba(74, 59, 50, 0.2);
+        }
+
+        /* 底部链接 */
+        .footer-link {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            line-height: 1.6;
+        }
+
+        .footer-link a {
+            color: var(--text-main);
+            text-decoration: none;
+            transition: all 0.3s;
+            margin-left: 6px;
+            border-bottom: 1px solid transparent;
+            padding-bottom: 2px;
+        }
+
+        .footer-link a:hover {
+            color: var(--accent-gold);
+            border-bottom-color: var(--accent-gold);
+        }
+
+        /* ============ 修改部分：Flask 消息闪现 + 分类样式 ============ */
+        .flash-messages {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 25px 0;
+            text-align: center;
+        }
+
+        .flash-messages li {
+            font-size: 0.85rem;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        /* 报错消息（酒红） */
+        .flash-error {
+            color: var(--accent-red);
+            background: rgba(114, 47, 55, 0.08);
+            border: 1px solid rgba(114, 47, 55, 0.15);
+        }
+
+        /* 成功消息（墨绿，为后续登录成功等提示准备） */
+        .flash-success {
+            color: var(--accent-green);
+            background: rgba(43, 58, 50, 0.08);
+            border: 1px solid rgba(43, 58, 50, 0.15);
+        }
+        /* ====================================================== */
+
+        /* 响应式 */
+        @media (max-width: 480px) {
+            .card {
+                padding: 35px 25px;
+            }
+            .quote {
+                font-size: 0.85rem;
+                margin-bottom: 25px;
+            }
+            .card-header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="light-glow"></div>
+    <div class="container">
+        <div class="quote">
+            “如果你不出去走走，你就会以为这就是世界。——《天堂电影院》”
+        </div>
+
+        <div class="card">
+            <!-- 放映机镜头元素的SVG装饰 -->
+            <svg class="decor-lens" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="6"></circle>
+                <circle cx="12" cy="12" r="2"></circle>
+                <path d="M12 2 L12 6"></path>
+                <path d="M12 18 L12 22"></path>
+                <path d="M2 12 L6 12"></path>
+                <path d="M18 12 L22 12"></path>
+            </svg>
+
+            <div class="card-header">
+                <h1>光影手记</h1>
+                <p>重逢在银幕的光晕里</p>
+            </div>
+
+            <!-- 修改部分：支持分类的消息闪现 -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                <ul class="flash-messages">
+                {% for category, message in messages %}
+                  <li class="flash-{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+              {% endif %}
+            {% endwith %}
+
+            <form id="loginForm" method="POST">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" name="username" placeholder="你的代号，如电影里的老友" autocomplete="off">
+                    <span class="error-message" id="usernameError">名字不能为空，放映员在等你</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" name="password" placeholder="你设下的光影密钥">
+                    <span class="error-message" id="passwordError">密钥不可为空</span>
+                </div>
+
+                <label class="form-checkbox">
+                    <input type="checkbox" name="remember" id="remember">
+                    <label for="remember">留存记忆（记住我）</label>
+                </label>
+
+                <button type="submit" class="btn-submit">推开放映厅的门</button>
+            </form>
+
+            <div class="footer-link">
+                还没有光影手记？<br>
+                来，写下你的第一页 <a href="/register">去领取观影证</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 前端简单交互与校验
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            let isValid = true;
+
+            const username = document.getElementById('username');
+            const password = document.getElementById('password');
+
+            // 重置错误状态
+            document.querySelectorAll('.error-message').forEach(el => el.classList.remove('visible'));
+
+            // 用户名空值校验
+            if (!username.value.trim()) {
+                document.getElementById('usernameError').classList.add('visible');
+                isValid = false;
+            }
+
+            // 密码空值及长度校验
+            if (!password.value) {
+                document.getElementById('passwordError').textContent = "密钥不可为空";
+                document.getElementById('passwordError').classList.add('visible');
+                isValid = false;
+            } else if (password.value.length < 6) {
+                document.getElementById('passwordError').textContent = "光影密钥不应短于6个字符";
+                document.getElementById('passwordError').classList.add('visible');
+                isValid = false;
+            }
+
+            // 校验不通过则阻止表单提交
+            if (!isValid) {
+                e.preventDefault();
+            }
+        });
+
+        // 用户输入时实时清除错误提示
+        document.querySelectorAll('.form-group input[type="text"], .form-group input[type="password"]').forEach(input => {
+            input.addEventListener('input', function() {
+                const errorSpan = this.nextElementSibling;
+                if (errorSpan && errorSpan.classList.contains('error-message')) {
+                    errorSpan.classList.remove('visible');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

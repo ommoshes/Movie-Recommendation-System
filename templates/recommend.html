@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>光影手记 - 专属排片</title>
+    <style>
+        /* 复用全局风格 */
+        :root {
+            --bg-color: #f4eee8;
+            --card-bg: rgba(255, 255, 255, 0.55);
+            --text-main: #4a3b32;
+            --text-muted: #8b796d;
+            --accent-gold: #cba052;
+            --accent-red: #722f37;
+        }
+        body {
+            margin: 0; padding: 0; min-height: 100vh;
+            background: linear-gradient(135deg, #e8dfd8 0%, #d4c5b9 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text-main);
+            position: relative;
+        }
+
+        body::before {
+            content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.06'/%3E%3C/svg%3E");
+            pointer-events: none; z-index: 1;
+        }
+
+        .light-glow {
+            position: absolute; width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(203, 160, 82, 0.15) 0%, rgba(203, 160, 82, 0) 70%);
+            top: -100px; right: -100px; border-radius: 50%; pointer-events: none; z-index: 0;
+        }
+
+        .container { position: relative; z-index: 2; width: 100%; max-width: 1200px; margin: 0 auto; padding: 20px; box-sizing: border-box; }
+
+        /* 导航栏 */
+        .navbar {
+            background: var(--card-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 12px;
+            padding: 15px 25px; margin-bottom: 30px; box-shadow: 0 8px 30px rgba(74, 59, 50, 0.1);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .navbar .logo { font-family: "Noto Serif SC", serif; font-size: 1.5rem; font-weight: 500; color: var(--text-main); letter-spacing: 3px; }
+        .navbar .nav-links { display: flex; gap: 20px; }
+        .navbar .nav-links a { color: var(--text-main); text-decoration: none; font-size: 0.9rem; transition: all 0.3s; border-bottom: 1px solid transparent; letter-spacing: 1px; }
+        .navbar .nav-links a:hover { color: var(--accent-gold); border-bottom-color: var(--accent-gold); }
+
+        /* 推荐头部区 */
+        .recommend-header {
+            text-align: center; margin-bottom: 30px; padding: 40px 20px;
+            background: var(--card-bg); backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(74, 59, 50, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .recommend-header::after {
+            content: 'FOR YOU';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 6rem;
+            color: rgba(203, 160, 82, 0.05);
+            font-family: "Noto Serif SC", serif;
+            font-weight: bold;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 0;
+        }
+
+        .recommend-header-content { position: relative; z-index: 2; }
+        .recommend-header h2 { font-family: "Noto Serif SC", serif; margin: 0 0 15px 0; font-weight: bold; font-size: 2rem; letter-spacing: 2px; }
+        .recommend-header p { margin: 0; color: var(--text-muted); font-size: 1.05rem; line-height: 1.8; letter-spacing: 1px; }
+        .genre-highlight { color: var(--accent-gold); font-weight: bold; border-bottom: 1px dashed var(--accent-gold); padding-bottom: 2px; }
+
+        /* 新增功能：前端工具栏（过滤与布局切换） */
+        .toolbar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; padding: 0 10px;
+        }
+
+        .filter-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .filter-btn {
+            background: rgba(255,255,255,0.4); border: 1px solid rgba(139, 121, 109, 0.2);
+            padding: 6px 15px; border-radius: 20px; font-size: 0.85rem; color: var(--text-main);
+            cursor: pointer; transition: all 0.3s; letter-spacing: 1px;
+        }
+        .filter-btn:hover { border-color: var(--accent-gold); }
+        .filter-btn.active { background: var(--text-main); color: #fff; border-color: var(--text-main); }
+
+        .layout-toggle { display: flex; gap: 5px; }
+        .layout-btn {
+            background: none; border: none; font-size: 1.2rem; cursor: pointer;
+            opacity: 0.5; transition: opacity 0.3s;
+        }
+        .layout-btn.active { opacity: 1; }
+
+        /* 电影网格 - 胶片卡片复用 */
+        .movie-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 35px; margin-bottom: 50px;
+            transition: all 0.5s ease;
+        }
+
+        /* 列表布局（List Layout）的样式 */
+        .movie-grid.list-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .movie-grid.list-layout .movie-card {
+            flex-direction: row; padding: 10px;
+        }
+
+        .movie-grid.list-layout .movie-poster {
+            width: 150px; height: 200px; flex-shrink: 0; margin-bottom: 0;
+        }
+
+        .movie-grid.list-layout .movie-info {
+            flex-grow: 1; padding: 15px 25px; margin-top: 0; margin-left: 10px;
+            justify-content: center;
+        }
+
+        /* 胶片卡片样式 */
+        .movie-card {
+            background: #2b2b2b; border-radius: 6px; box-shadow: 0 10px 30px rgba(74, 59, 50, 0.15);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative; display: flex; flex-direction: column; overflow: hidden;
+            border: 1px solid rgba(74, 59, 50, 0.2); padding: 8px;
+        }
+
+        .movie-card.hidden { display: none; } /* 用于前端过滤 */
+
+        .movie-card:hover { transform: translateY(-8px); box-shadow: 0 15px 40px rgba(74, 59, 50, 0.25); }
+
+        .movie-card::before, .movie-card::after {
+            content: ""; position: absolute; top: 0; bottom: 0; width: 14px;
+            background-image: radial-gradient(circle at center, #f4eee8 40%, transparent 45%);
+            background-size: 14px 22px; z-index: 10;
+        }
+        .movie-card::before { left: 2px; }
+        .movie-card::after { right: 2px; }
+
+        .movie-card-inner-overlay {
+            position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px;
+            background: rgba(203, 160, 82, 0.05); pointer-events: none; z-index: 15; mix-blend-mode: multiply;
+        }
+
+        .card-full-link { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; }
+
+        /* 动态 SVG 海报 */
+        .movie-poster {
+            height: 300px; width: 100%; position: relative; background-color: var(--text-main);
+            overflow: hidden; border-radius: 4px; z-index: 2;
+        }
+        .poster-svg-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 0; }
+        .poster-svg-container svg { width: 100%; height: 100%; }
+
+        .movie-poster::before {
+            content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+            mix-blend-mode: multiply; z-index: 1; pointer-events: none;
+        }
+
+        .poster-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.85) 100%);
+            display: flex; flex-direction: column; justify-content: flex-end; padding: 20px 15px; z-index: 2;
+        }
+
+        .poster-label { font-size: 0.65rem; color: rgba(255, 255, 255, 0.7); letter-spacing: 3px; margin-bottom: 6px; text-transform: uppercase; }
+        .poster-title { font-family: "Noto Serif SC", serif; font-size: 1.15rem; color: #fff; letter-spacing: 2px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        /* 卡片底部信息 */
+        .movie-info {
+            padding: 15px; background: #fff; display: flex; flex-direction: column; gap: 8px;
+            border-radius: 4px; margin-top: 8px; z-index: 2; position: relative;
+        }
+
+        /* 推荐来源标签重新设计 */
+        .source-tag {
+            align-self: flex-start; font-size: 0.7rem; padding: 3px 8px; border-radius: 4px;
+            letter-spacing: 1px; margin-bottom: 5px; border: 1px solid;
+        }
+        .source-cf { background: rgba(114, 47, 55, 0.05); color: var(--accent-red); border-color: rgba(114, 47, 55, 0.2); }
+        .source-cb { background: rgba(203, 160, 82, 0.05); color: #a67c33; border-color: rgba(203, 160, 82, 0.2); }
+        .source-hot { background: rgba(74, 59, 50, 0.05); color: var(--text-muted); border-color: rgba(74, 59, 50, 0.2); }
+
+        .movie-info .title { font-size: 1.05rem; font-weight: bold; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .movie-info .genres { font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+        .movie-info .genres::before {
+            content: ''; display: inline-block; width: 12px; height: 12px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23cba052' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='2' width='20' height='20' rx='2.18' ry='2.18'%3E%3C/rect%3E%3Cline x1='7' y1='2' x2='7' y2='22'%3E%3C/line%3E%3Cline x1='17' y1='2' x2='17' y2='22'%3E%3C/line%3E%3Cline x1='2' y1='12' x2='22' y2='12'%3E%3C/line%3E%3Cline x1='2' y1='7' x2='7' y2='7'%3E%3C/line%3E%3Cline x1='2' y1='17' x2='7' y2='17'%3E%3C/line%3E%3Cline x1='17' y1='17' x2='22' y2='17'%3E%3C/line%3E%3Cline x1='17' y1='7' x2='22' y2='7'%3E%3C/line%3E%3C/svg%3E");
+            background-size: cover;
+        }
+        .movie-info .score { margin-top: auto; font-size: 0.9rem; color: var(--accent-gold); font-weight: bold; }
+
+        /* 加载动画 */
+        .page-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #e8dfd8 0%, #d4c5b9 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .page-loading.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(203, 160, 82, 0.2);
+            border-top-color: var(--accent-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* 电影卡片入场动画 */
+        .movie-card {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: cardFadeIn 0.6s ease forwards;
+        }
+
+        @keyframes cardFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 导航栏滑入动画 */
+        .navbar {
+            animation: slideDown 0.5s ease forwards;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 推荐头部淡入动画 */
+        .recommend-header {
+            animation: fadeIn 0.8s ease 0.2s forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        /* 工具栏滑入动画 */
+        .toolbar {
+            animation: slideUp 0.6s ease 0.3s forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 收藏按钮样式 */
+        .favorite-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            cursor: pointer;
+            z-index: 25;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .favorite-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .favorite-btn svg {
+            width: 20px;
+            height: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .favorite-btn.active {
+            background: var(--accent-red);
+        }
+
+        .favorite-btn.active svg {
+            fill: #fff;
+            stroke: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="light-glow"></div>
+    
+    <!-- 加载动画遮罩 -->
+    <div class="page-loading" id="pageLoading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">正在为你排片...</div>
+    </div>
+    
+    <div class="container">
+        <!-- 导航栏 -->
+        <div class="navbar">
+            <div class="logo">光影手记</div>
+            <div class="nav-links">
+                <a href="/">首页</a>
+                <a href="/search">电影搜索</a>
+                <a href="/recommend">为你推荐</a>
+                <a href="/profile">个人画像</a>
+                <a href="/logout">退出登录</a>
+            </div>
+        </div>
+
+        <!-- 推荐语 -->
+        <div class="recommend-header">
+            <div class="recommend-header-content">
+                <h2>专属排片厅</h2>
+                {% if top_genres %}
+                    <p>基于你的观影留印，我们察觉到你偏爱的光影温度。<br>为你甄选 <span class="genre-highlight">{{ top_genres | join('、') }}</span> 类型的上乘佳作：</p>
+                {% else %}
+                    <p>你尚未留下足够的观影印记。<br>先为你奉上广受好评的光影经典，开启你的旅程：</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 前端工具栏：过滤与布局 -->
+        <div class="toolbar">
+            <div class="filter-group" id="source-filters">
+                <button class="filter-btn active" data-filter="all">全部展映</button>
+                <button class="filter-btn" data-filter="协同过滤">品味投契 (协同)</button>
+                <button class="filter-btn" data-filter="画像偏好">偏好类型 (画像)</button>
+                <button class="filter-btn" data-filter="热门精选">热门精选</button>
+            </div>
+            <div class="layout-toggle">
+                <button class="layout-btn active" id="btn-grid" title="网格视图">🎞️</button>
+                <button class="layout-btn" id="btn-list" title="列表视图">📄</button>
+            </div>
+        </div>
+
+        <!-- 推荐列表 -->
+        <div class="movie-grid" id="movie-grid">
+            {% for movie in movies %}
+            <div class="movie-card" data-source="{{ movie.rec_source }}" data-movie-id="{{ movie.movieId }}" data-movie-title="{{ movie.title }}">
+                <!-- 收藏按钮 -->
+                <button class="favorite-btn" onclick="toggleFavorite(event, {{ movie.movieId }}, '{{ movie.title }}')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                </button>
+                <div class="movie-card-inner-overlay"></div>
+                <a href="/movie/{{ movie.movieId }}" class="card-full-link"></a>
+
+                <div class="movie-poster" data-title="{{ movie.title }}" data-genres="{{ movie.genres }}">
+                    <div class="poster-svg-container"></div>
+                    <div class="poster-overlay">
+                        <div class="poster-label">RECOMMENDED</div>
+                        <div class="poster-title">{{ movie.title }}</div>
+                    </div>
+                </div>
+
+                <div class="movie-info">
+                    <!-- 推荐来源标签 -->
+                    {% if movie.rec_source == '协同过滤' %}
+                        <span class="source-tag source-cf">品味投契</span>
+                    {% elif movie.rec_source == '画像偏好' %}
+                        <span class="source-tag source-cb">偏好类型</span>
+                    {% elif movie.rec_source == '热门精选' %}
+                        <span class="source-tag source-hot">热门精选</span>
+                    {% endif %}
+
+                    <div class="title" title="{{ movie.title }}">{{ movie.title }}</div>
+                    <div class="genres">{{ movie.genres }}</div>
+                    <div class="score">⭐ {{ movie.avg_rating|round(1) }}</div>
+                </div>
+            </div>
+            {% else %}
+                <p style="color: var(--text-muted); grid-column: 1 / -1; text-align: center; font-style: italic;">胶片库已翻遍，暂时没有找到符合你口味的推荐...</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 纯前端交互逻辑 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 隐藏加载动画
+            const pageLoading = document.getElementById('pageLoading');
+            if (pageLoading) {
+                setTimeout(() => {
+                    pageLoading.classList.add('hidden');
+                }, 300);
+            }
+
+            // 电影卡片逐个出现动画
+            const cards = document.querySelectorAll('.movie-card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${0.1 + index * 0.1}s`;
+            });
+
+            // 1. 动态 SVG 海报生成逻辑（复用）
+            const palettes = [
+                { bg: '#4a3b32', fg: '#cba052', accent: '#722f37' },
+                { bg: '#2b3a32', fg: '#8b796d', accent: '#cba052' },
+                { bg: '#3a313d', fg: '#cba052', accent: '#5c6b65' },
+                { bg: '#722f37', fg: '#e8dfd8', accent: '#4a3b32' },
+                { bg: '#485b6b', fg: '#cba052', accent: '#25323d' }
+            ];
+
+            function PRNG(seed) {
+                this.seed = seed % 2147483647;
+                if (this.seed <= 0) this.seed += 2147483646;
+            }
+            PRNG.prototype.next = function() { return this.seed = this.seed * 16807 % 2147483647; };
+            PRNG.prototype.nextFloat = function() { return (this.next() - 1) / 2147483646; };
+
+            const posters = document.querySelectorAll('.movie-poster');
+            posters.forEach((poster) => {
+                const title = poster.getAttribute('data-title') || 'Unknown';
+                const genresStr = poster.getAttribute('data-genres') || '';
+                
+
+                let seedVal = 0;
+                for(let i = 0; i < title.length; i++) seedVal += title.charCodeAt(i) * (i + 1);
+                const rng = new PRNG(seedVal);
+
+                const palette = palettes[Math.floor(rng.nextFloat() * palettes.length)];
+
+                let shapeType = 'mixed';
+                const lowerGenres = genresStr.toLowerCase();
+                if (lowerGenres.includes('动作') || lowerGenres.includes('科幻') || lowerGenres.includes('惊悚')) shapeType = 'sharp';
+                else if (lowerGenres.includes('爱情') || lowerGenres.includes('剧情') || lowerGenres.includes('动画')) shapeType = 'round';
+                else if (lowerGenres.includes('纪录片') || lowerGenres.includes('历史')) shapeType = 'grid';
+
+                let svgContent = `<svg viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg">`;
+                svgContent += `<rect width="200" height="300" fill="${palette.bg}"/>`;
+
+                const numShapes = Math.floor(rng.nextFloat() * 3) + 2;
+                for(let i = 0; i < numShapes; i++) {
+                    const color = rng.nextFloat() > 0.5 ? palette.fg : palette.accent;
+                    const opacity = 0.5 + (rng.nextFloat() * 0.5);
+
+                    let currentShapeType = shapeType;
+                    if (shapeType === 'mixed') {
+                        const types = ['sharp', 'round', 'grid'];
+                        currentShapeType = types[Math.floor(rng.nextFloat() * types.length)];
+                    }
+
+                    if (currentShapeType === 'sharp') {
+                        const points = [];
+                        for(let p=0; p<3; p++) points.push(`${Math.floor(rng.nextFloat()*200)},${Math.floor(rng.nextFloat()*300)}`);
+                        svgContent += `<polygon points="${points.join(' ')}" fill="${color}" opacity="${opacity}"/>`;
+                    }
+                    else if (currentShapeType === 'round') {
+                        const cx = Math.floor(rng.nextFloat() * 200);
+                        const cy = Math.floor(rng.nextFloat() * 300);
+                        const r = 30 + Math.floor(rng.nextFloat() * 70);
+                        svgContent += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}" opacity="${opacity}"/>`;
+                    }
+                    else if (currentShapeType === 'grid') {
+                        const x = Math.floor(rng.nextFloat() * 150);
+                        const y = Math.floor(rng.nextFloat() * 200);
+                        const w = 40 + Math.floor(rng.nextFloat() * 80);
+                        const h = 40 + Math.floor(rng.nextFloat() * 120);
+                        svgContent += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${color}" opacity="${opacity}"/>`;
+                    }
+                }
+
+                if (rng.nextFloat() > 0.4) {
+                    if (rng.nextFloat() > 0.5) {
+                        const yPos = Math.floor(rng.nextFloat() * 250);
+                        svgContent += `<line x1="0" y1="${yPos}" x2="200" y2="${yPos}" stroke="${palette.fg}" stroke-width="4" opacity="0.8"/>`;
+                    } else {
+                        const xOffset = rng.nextFloat() > 0.5 ? 10 : 180;
+                        for(let holeY=10; holeY<300; holeY+=30) {
+                            svgContent += `<rect x="${xOffset}" y="${holeY}" width="10" height="15" fill="${palette.bg}" opacity="0.8" rx="2"/>`;
+                        }
+                    }
+                }
+                svgContent += `</svg>`;
+                poster.querySelector('.poster-svg-container').innerHTML = svgContent;
+            });
+
+            // 2. 前端过滤逻辑 (根据推荐来源筛选)
+            const filterBtns = document.querySelectorAll('.filter-btn');
+
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // 更新按钮激活状态
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    const filterValue = btn.getAttribute('data-filter');
+
+                    // 过滤卡片
+                    cards.forEach(card => {
+                        if (filterValue === 'all' || card.getAttribute('data-source') === filterValue) {
+                            card.classList.remove('hidden');
+                        } else {
+                            card.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+
+            // 3. 布局切换逻辑 (网格 / 列表)
+            const gridBtn = document.getElementById('btn-grid');
+            const listBtn = document.getElementById('btn-list');
+            const movieGrid = document.getElementById('movie-grid');
+
+            gridBtn.addEventListener('click', () => {
+                gridBtn.classList.add('active');
+                listBtn.classList.remove('active');
+                movieGrid.classList.remove('list-layout');
+            });
+
+            listBtn.addEventListener('click', () => {
+                listBtn.classList.add('active');
+                gridBtn.classList.remove('active');
+                movieGrid.classList.add('list-layout');
+            });
+
+            // 初始化收藏按钮状态
+            initFavoriteButtons();
+        });
+
+        // 收藏功能
+        function getFavorites() {
+            const favorites = localStorage.getItem('movieFavorites');
+            return favorites ? JSON.parse(favorites) : [];
+        }
+
+        function saveFavorites(favorites) {
+            localStorage.setItem('movieFavorites', JSON.stringify(favorites));
+        }
+
+        function isFavorite(movieId) {
+            const favorites = getFavorites();
+            return favorites.some(f => f.id === movieId);
+        }
+
+        function toggleFavorite(event, movieId, movieTitle) {
+            event.stopPropagation();
+            event.preventDefault();
+
+            const btn = event.currentTarget;
+            const favorites = getFavorites();
+            const index = favorites.findIndex(f => f.id === movieId);
+
+            if (index > -1) {
+                favorites.splice(index, 1);
+                btn.classList.remove('active');
+            } else {
+                favorites.push({ id: movieId, title: movieTitle, time: Date.now() });
+                btn.classList.add('active');
+            }
+
+            saveFavorites(favorites);
+        }
+
+        function initFavoriteButtons() {
+            const buttons = document.querySelectorAll('.favorite-btn');
+            buttons.forEach(btn => {
+                const card = btn.closest('.movie-card');
+                const movieId = parseInt(card.dataset.movieId);
+                if (isFavorite(movieId)) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

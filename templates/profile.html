@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>光影手记 - 我的档案</title>
+    <style>
+        :root {
+            --bg-color: #f4eee8;
+            --card-bg: rgba(255, 255, 255, 0.55);
+            --text-main: #4a3b32;
+            --text-muted: #8b796d;
+            --accent-gold: #cba052;
+            --accent-red: #722f37;
+        }
+        body {
+            margin: 0; padding: 0; min-height: 100vh;
+            background: linear-gradient(135deg, #e8dfd8 0%, #d4c5b9 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text-main);
+        }
+        .container { width: 100%; max-width: 900px; margin: 0 auto; padding: 20px; box-sizing: border-box; }
+
+        /* 导航栏 (复用之前的) */
+        .navbar {
+            background: var(--card-bg); backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 12px;
+            padding: 15px 25px; margin-bottom: 30px; box-shadow: 0 8px 30px rgba(74, 59, 50, 0.1);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .navbar .logo { font-size: 1.5rem; font-weight: 500; letter-spacing: 3px; }
+        .navbar .nav-links { display: flex; gap: 20px; }
+        .navbar .nav-links a { color: var(--text-main); text-decoration: none; font-size: 0.9rem; transition: all 0.3s; border-bottom: 1px solid transparent; }
+        .navbar .nav-links a:hover { color: var(--accent-gold); border-bottom-color: var(--accent-gold); }
+
+        /* 档案头部 */
+        .profile-header {
+            background: var(--card-bg); backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 12px;
+            padding: 30px; box-shadow: 0 8px 25px rgba(74, 59, 50, 0.1);
+            display: flex; align-items: center; gap: 25px; margin-bottom: 20px;
+        }
+        .avatar {
+            width: 80px; height: 80px; border-radius: 50%; background: var(--accent-red);
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; font-weight: bold; flex-shrink: 0; box-shadow: 0 4px 10px rgba(114, 47, 55, 0.3);
+        }
+        .user-info h1 { margin: 0; font-size: 1.8rem; font-weight: 500; }
+        .user-info p { margin: 5px 0 0 0; color: var(--text-muted); font-size: 0.9rem; }
+
+        /* 统计数据区 */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;
+        }
+        .stat-card {
+            background: var(--card-bg); backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 12px;
+            padding: 20px; text-align: center; box-shadow: 0 5px 15px rgba(74, 59, 50, 0.05);
+        }
+        .stat-card .num { font-size: 2rem; font-weight: bold; color: var(--accent-gold); }
+        .stat-card .label { font-size: 0.85rem; color: var(--text-muted); margin-top: 5px; }
+
+        /* 偏好类型区 */
+        .section-title {
+            margin: 30px 0 15px 0; font-size: 1.1rem; font-weight: 600; border-left: 4px solid var(--accent-gold); padding-left: 10px;
+        }
+        .genre-tags { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        .genre-tag {
+            background: rgba(203, 160, 82, 0.15); color: var(--accent-gold); padding: 6px 14px;
+            border-radius: 20px; font-size: 0.85rem; border: 1px solid rgba(203, 160, 82, 0.3);
+        }
+
+        /* 评分历史列表 */
+        .history-card {
+            background: var(--card-bg); backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 12px;
+            padding: 20px; box-shadow: 0 8px 25px rgba(74, 59, 50, 0.1);
+        }
+        .history-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 0; border-bottom: 1px dashed rgba(74, 59, 50, 0.1);
+        }
+        .history-item:last-child { border-bottom: none; }
+        .movie-title-col { flex: 1; font-weight: 500; }
+        .movie-genre-col { width: 120px; color: var(--text-muted); font-size: 0.85rem; text-align: center; }
+        .movie-rating-col { width: 80px; text-align: right; color: var(--accent-gold); font-weight: bold; }
+
+        .empty-state { text-align: center; color: var(--text-muted); padding: 20px 0; font-style: italic; }
+        /* 收藏区样式，和页面整体风格保持一致 */
+        #favorites-section { margin-bottom: 20px; }
+        .favorite-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 10px; border-bottom: 1px dashed rgba(74,59,50,0.08);
+            background: rgba(255,255,255,0.4); border-radius: 8px; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(74,59,50,0.03);
+        }
+        .fav-poster {
+            width: 64px; height: 64px; border-radius: 6px; background: linear-gradient(135deg,#d4c5b9,#e8dfd8);
+            display:flex;align-items:center;justify-content:center;color:var(--text-main);font-weight:600;flex-shrink:0;border:1px solid rgba(74,59,50,0.06);
+        }
+        .fav-info { flex: 1; min-width: 0; }
+        .fav-title { font-weight: 600; color: var(--text-main); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+        /* 收藏标题链接颜色匹配页面主色，去掉默认蓝色 */
+        .fav-title a { color: var(--text-main); text-decoration: none; }
+        .fav-title a:hover { color: var(--accent-gold); text-decoration: underline; }
+        .fav-meta { font-size: 0.85rem; color: var(--text-muted); margin-top: 6px; }
+        .remove-fav {
+            background: transparent; border: 1px solid rgba(114,47,55,0.08); color: var(--accent-red); padding: 6px 10px; border-radius: 8px; cursor: pointer;
+        }
+        .remove-fav:hover { background: var(--accent-red); color: #fff; border-color: var(--accent-red); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 导航栏 -->
+        <div class="navbar">
+            <div class="logo">光影手记</div>
+            <div class="nav-links">
+                <a href="/">首页</a>
+                <a href="/search">电影搜索</a>
+                <a href="/profile">个人画像</a>
+                <a href="/logout">退出登录</a>
+            </div>
+        </div>
+
+        <!-- 档案头部 -->
+        <div class="profile-header">
+            <div class="avatar">{{ user.username[0] | upper }}</div>
+            <div class="user-info">
+                <h1>放映员 {{ user.username }}</h1>
+                <p>每一场放映，都是一次灵魂的共振</p>
+            </div>
+        </div>
+
+        <!-- 统计数据 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="num">{{ stats.total_ratings or 0 }}</div>
+                <div class="label">留印次数</div>
+            </div>
+            <div class="stat-card">
+                <div class="num">{{ "%.1f"|format(stats.avg_rating or 0) }}</div>
+                <div class="label">平均品味</div>
+            </div>
+            <div class="stat-card">
+                <div class="num">{{ top_genres|length }}</div>
+                <div class="label">偏好类型</div>
+            </div>
+        </div>
+
+    <!-- 数据洞察区块 -->
+<div class="data-insight-section" style="margin-top: 50px;">
+    <h3 style="font-weight: 500; letter-spacing: 1px; margin-bottom: 20px;">DATA INSIGHT / 数据洞察</h3>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+        <!-- 左侧：全站评分分布 -->
+        <div style="flex: 1; min-width: 300px; background: var(--card-bg); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.4); border-radius: 12px; padding: 20px; box-shadow: 0 8px 25px rgba(74, 59, 50, 0.1);">
+            <!-- 直接用 safe 渲染后端传过来的图表 HTML -->
+            {{ rating_chart_html|safe }}
+        </div>
+
+        <!-- 右侧：个人口味雷达 -->
+        <div style="flex: 1; min-width: 300px; background: var(--card-bg); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.4); border-radius: 12px; padding: 20px; box-shadow: 0 8px 25px rgba(74, 59, 50, 0.1);">
+            {% if has_radar %}
+                {{ radar_chart_html|safe }}
+            {% else %}
+                <p style="text-align:center; color:#8b796d; padding-top:100px;">暂无评分数据，快去给电影打分吧~</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+        <!-- 偏好类型 -->
+        {% if top_genres %}
+        <div class="section-title">你的品味标签</div>
+        <div class="genre-tags">
+            {% for genre, count in top_genres %}
+                <span class="genre-tag">{{ genre }} ({{ count }}次高分)</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- 新增：我的收藏（从 localStorage 读取并渲染） -->
+        <div class="section-title">我的收藏</div>
+        <div id="favorites-section" class="history-card">
+            <div id="favorites-container">
+                <div class="empty-state" id="favorites-empty">正在加载收藏……</div>
+            </div>
+        </div>
+
+        <!-- 评分历史 -->
+        <div class="section-title">光影留痕</div>
+        <div class="history-card">
+            {% if rated_movies %}
+                {% for movie in rated_movies %}
+                <div class="history-item">
+                    <div class="movie-title-col">{{ movie.title }}</div>
+                    <div class="movie-genre-col">{{ movie.genres }}</div>
+                    <div class="movie-rating-col">★ {{ movie.rating }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">你尚未留下任何观影痕迹，去首页探索吧</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // 从 localStorage 读取收藏并渲染到个人画像页面
+        function getFavorites() {
+            try {
+                const raw = localStorage.getItem('movieFavorites');
+                return raw ? JSON.parse(raw) : [];
+            } catch (e) {
+                console.error('读取收藏失败', e);
+                return [];
+            }
+        }
+
+        function saveFavorites(favs) {
+            localStorage.setItem('movieFavorites', JSON.stringify(favs));
+        }
+
+        function renderFavorites() {
+            const container = document.getElementById('favorites-container');
+            const emptyEl = document.getElementById('favorites-empty');
+            if (!container) return;
+            const favs = getFavorites();
+            container.innerHTML = '';
+            if (!favs || favs.length === 0) {
+                container.innerHTML = '<div class="empty-state">你还没有收藏任何电影，去首页收藏喜欢的影片吧</div>';
+                return;
+            }
+
+                    favs.forEach(f => {
+                        const item = document.createElement('div');
+                        item.className = 'favorite-item';
+                        const titleSafe = (f.title || '未知影片').replace(/"/g, '&quot;');
+                        const timeStr = f.time ? new Date(f.time).toLocaleString() : '';
+                        item.innerHTML = `
+                            <div class="fav-poster">🎬</div>
+                            <div class="fav-info">
+                                <div class="fav-title"><a href="/movie/${f.id}">${titleSafe}</a></div>
+                                <div class="fav-meta">收藏时间: ${timeStr}</div>
+                            </div>
+                            <div>
+                                <button data-id="${f.id}" class="remove-fav">移除</button>
+                            </div>
+                        `;
+                        container.appendChild(item);
+                    });
+
+            // 绑定移除事件
+            container.querySelectorAll('.remove-fav').forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    let favs = getFavorites();
+                    favs = favs.filter(x => x.id !== id);
+                    saveFavorites(favs);
+                    renderFavorites();
+                    // 同步更新首页收藏按钮（如果在同一页面打开首页）
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            renderFavorites();
+        });
+    </script>
+
+</body>
+</html>

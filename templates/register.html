@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - 光影手记</title>
+    <style>
+        /* 色彩定义：暖棕、米白、哑光金、酒红 */
+        :root {
+            --bg-color: #f4eee8; 
+            --card-bg: rgba(255, 255, 255, 0.55);
+            --text-main: #4a3b32; 
+            --text-muted: #8b796d;
+            --accent-gold: #cba052; 
+            --accent-red: #722f37; 
+            --accent-green: #2b3a32; 
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #e8dfd8 0%, #d4c5b9 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            color: var(--text-main);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 胶片颗粒感纹理背景 */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.06'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 柔和弥散光 */
+        .light-glow {
+            position: absolute;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(203, 160, 82, 0.12) 0%, rgba(203, 160, 82, 0) 70%);
+            top: -150px;
+            left: -100px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 480px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* 顶部引言 */
+        .quote {
+            text-align: center;
+            font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            margin-bottom: 35px;
+            letter-spacing: 1.5px;
+            font-style: italic;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+            padding: 0 10px;
+        }
+
+        /* 悬浮磨砂玻璃卡片 */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            padding: 45px 40px;
+            box-shadow: 0 12px 40px rgba(74, 59, 50, 0.12),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 胶片极简线描插画 */
+        .decor-film {
+            position: absolute;
+            right: 25px;
+            top: 25px;
+            opacity: 0.12;
+            width: 45px;
+            height: auto;
+            pointer-events: none;
+        }
+        
+        .decor-film path, .decor-film line, .decor-film rect {
+            fill: none;
+            stroke: var(--text-main);
+            stroke-width: 1.5;
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .card-header h1 {
+            font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+            font-size: 2.2rem;
+            font-weight: 500;
+            margin: 0;
+            letter-spacing: 6px;
+            color: var(--text-main);
+            padding-left: 6px; /* 补偿字距导致的偏移 */
+        }
+
+        .card-header p {
+            margin: 12px 0 0;
+            font-size: 0.85rem;
+            color: var(--accent-gold);
+            letter-spacing: 3px;
+        }
+
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 28px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            letter-spacing: 1px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(139, 121, 109, 0.25);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            transition: all 0.3s ease;
+            outline: none;
+            font-family: inherit;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input::placeholder {
+            color: rgba(139, 121, 109, 0.55);
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        .form-group input:focus {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px rgba(203, 160, 82, 0.15);
+        }
+
+        /* 错误提示 */
+        .error-message {
+            color: var(--accent-red);
+            font-size: 0.75rem;
+            position: absolute;
+            bottom: -20px;
+            left: 0;
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+        }
+        
+        .error-message.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 注册按钮 */
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            background: var(--text-main);
+            color: #f4eee8;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.05rem;
+            letter-spacing: 4px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            margin-top: 15px;
+            font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+            box-shadow: 0 4px 15px rgba(74, 59, 50, 0.2);
+        }
+
+        .btn-submit:hover {
+            background: #362a23;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(74, 59, 50, 0.3);
+        }
+
+        .btn-submit:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 10px rgba(74, 59, 50, 0.2);
+        }
+
+        /* 底部链接 */
+        .footer-link {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        .footer-link a {
+            color: var(--text-main);
+            text-decoration: none;
+            transition: all 0.3s;
+            margin-left: 6px;
+            border-bottom: 1px solid transparent;
+            padding-bottom: 2px;
+        }
+
+        .footer-link a:hover {
+            color: var(--accent-gold);
+            border-bottom-color: var(--accent-gold);
+        }
+
+        /* ============ 修改部分：Flask 消息闪现样式 ============ */
+        .flash-messages {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 25px 0;
+            text-align: center;
+        }
+
+        .flash-messages li {
+            font-size: 0.85rem;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        /* 报错消息（红色酒红风格） */
+        .flash-error {
+            color: var(--accent-red);
+            background: rgba(114, 47, 55, 0.08);
+            border: 1px solid rgba(114, 47, 55, 0.15);
+        }
+
+        /* 成功消息（深绿风格，为后续登录成功等提示准备） */
+        .flash-success {
+            color: var(--accent-green);
+            background: rgba(43, 58, 50, 0.08);
+            border: 1px solid rgba(43, 58, 50, 0.15);
+        }
+        /* ====================================================== */
+
+        /* 响应式 */
+        @media (max-width: 480px) {
+            .card {
+                padding: 35px 25px;
+            }
+            .quote {
+                font-size: 0.85rem;
+                margin-bottom: 25px;
+            }
+            .card-header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="light-glow"></div>
+    <div class="container">
+        <div class="quote">
+            “我们读诗、写诗并不是因为它们好玩，而是因为我们是人类的一分，而人类是充满激情的。——《死亡诗社》”
+        </div>
+
+        <div class="card">
+            <!-- 胶片元素的SVG装饰 -->
+            <svg class="decor-film" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="2" width="20" height="20" rx="2" ry="2"></rect>
+                <line x1="7" y1="2" x2="7" y2="22"></line>
+                <line x1="17" y1="2" x2="17" y2="22"></line>
+                <line x1="2" y1="12" x2="7" y2="12"></line>
+                <line x1="2" y1="7" x2="7" y2="7"></line>
+                <line x1="2" y1="17" x2="7" y2="17"></line>
+                <line x1="17" y1="12" x2="22" y2="12"></line>
+                <line x1="17" y1="7" x2="22" y2="7"></line>
+                <line x1="17" y1="17" x2="22" y2="17"></line>
+            </svg>
+
+            <div class="card-header">
+                <h1>光影手记</h1>
+                <p>记录每一次人文相遇</p>
+            </div>
+
+            <!-- 修改部分：支持分类的消息闪现 -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                <ul class="flash-messages">
+                {% for category, message in messages %}
+                  <li class="flash-{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+              {% endif %}
+            {% endwith %}
+
+            <form id="registerForm" method="POST">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" name="username" placeholder="你的昵称，如电影主角" autocomplete="off">
+                    <span class="error-message" id="usernameError">名字不能为空，总得有个称呼</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" name="password" placeholder="设置密码，如锁住一段记忆">
+                    <span class="error-message" id="passwordError">密码不可为空，它是你的专属放映券</span>
+                </div>
+
+                <button type="submit" class="btn-submit">入场观影</button>
+            </form>
+
+            <div class="footer-link">
+                已有观影证？<a href="/login">前往检票口</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 前端简单交互与校验
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            let isValid = true;
+
+            const username = document.getElementById('username');
+            const password = document.getElementById('password');
+
+            // 重置错误状态
+            document.querySelectorAll('.error-message').forEach(el => el.classList.remove('visible'));
+
+            // 用户名空值校验
+            if (!username.value.trim()) {
+                document.getElementById('usernameError').classList.add('visible');
+                isValid = false;
+            }
+
+            // 密码空值校验
+            if (!password.value) {
+                document.getElementById('passwordError').classList.add('visible');
+                isValid = false;
+            }
+
+            // 校验不通过则阻止表单提交
+            if (!isValid) {
+                e.preventDefault();
+            }
+        });
+
+        // 用户输入时实时清除错误提示
+        document.querySelectorAll('.form-group input').forEach(input => {
+            input.addEventListener('input', function() {
+                const errorSpan = this.nextElementSibling;
+                if (errorSpan && errorSpan.classList.contains('error-message')) {
+                    errorSpan.classList.remove('visible');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
