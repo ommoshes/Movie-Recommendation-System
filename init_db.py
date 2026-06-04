@@ -1,10 +1,10 @@
 import mysql.connector
 
-# 连接MySQL（替换为你的MySQL配置）
+# 连接MySQL
 conn = mysql.connector.connect(
-    host="localhost",       # MySQL服务器地址（本地用localhost）
-    user="root",            # MySQL用户名（默认root）
-    password="yzt123456789",    # 替换为你的root密码
+    host="localhost",    
+    user="root",           
+    password="************",    
     database="movies_db"
 )
 
@@ -16,21 +16,21 @@ c = conn.cursor()
 # for record in records:
 #     print(record)
 
-# 1. 用户表（与SQLite类似，但自增主键用AUTO_INCREMENT）
+# 1. 用户表
 # c.execute('''CREATE TABLE `users` (
 #     id INT AUTO_INCREMENT PRIMARY KEY,
 #     username VARCHAR(50) UNIQUE NOT NULL,
 #     password VARCHAR(50) NOT NULL
 # )''')
 #
-# # 2. 电影表（与SQLite类似，主键用INT AUTO_INCREMENT）
+# # 2. 电影表
 # c.execute('''CREATE TABLE movies (
 #     movieId INT AUTO_INCREMENT PRIMARY KEY,
 #     title VARCHAR(255) NOT NULL,
 #     genres VARCHAR(100) NOT NULL
 # )''')
 
-# 3. 评分表（与SQLite类似，外键约束需指定）
+# 3. 评分表
 c.execute('''CREATE TABLE `rating` (
     user_id INT NOT NULL,
     movie_id INT NOT NULL,
