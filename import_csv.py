@@ -2,7 +2,7 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 
 # 创建MySQL引擎（替换为你的MySQL配置）
-engine = create_engine('mysql+mysqlconnector://root:yzt123456789@localhost/movies_db')
+engine = create_engine('mysql+mysqlconnector://root:**********@localhost/movies_db')
 
 # 读取movies.csv（确保文件在项目文件夹中）
 # movies = pd.read_csv('movies.csv')
