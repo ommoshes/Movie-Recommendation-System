@@ -8,7 +8,7 @@ from pyecharts import options as opts
 from pyecharts.commons.utils import JsCode
 
 app = Flask(__name__)
-app.secret_key = 'yzt1256448150'  # 必须设置，用于加密session和flash消息
+app.secret_key = 'yzt1256448150'  # 加密session和flash消息
 
 # 配置 Flask-Login
 login_manager = LoginManager()
@@ -19,7 +19,7 @@ login_manager.login_view = 'login'  # 如果未登录访问受保护页面，自
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'yzt123456789',  # 替换为你的密码
+    'password': 'yzt123456789',  # 密码
     'database': 'movies_db'
 }
 
